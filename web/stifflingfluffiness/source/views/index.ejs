@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= admin_username %> Blog</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --main-color: <%= main_color %>;
+        --main-color-11: <%= main_color %>11;
+        --main-color-22: <%= main_color %>22;
+        --main-color-33: <%= main_color %>33;
+        --main-color-44: <%= main_color %>44;
+        --background-color: <%= background_color %>;
+      }
+
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 95vw;
+        width: 800px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 24px;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px #0002, 0 1.5px 6px #aaf2;
+        border: 2.5px solid #ffd6e0;
+      }
+
+      h1 {
+        text-align: center;
+        color: var(--main-color);
+        letter-spacing: 1px;
+        margin-bottom: 32px;
+        text-shadow: 0 2px 8px #ffd6e0;
+      }
+
+      .login-form,
+      .logout-form {
+        text-align: right;
+        margin-bottom: 24px;
+      }
+
+      input[type="text"] {
+        padding: 7px 12px;
+        border: 1.5px solid #b3b3e6;
+        border-radius: 5px;
+        font-size: 1em;
+        outline: none;
+        transition: border 0.2s;
+      }
+
+      input[type="text"]:focus {
+        border: 1.5px solid #6c63ff;
+        background: #f0f4ff;
+      }
+
+      button {
+        background: var(--main-color);
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 7px 18px;
+        font-size: 1em;
+        cursor: pointer;
+        margin-left: 8px;
+        box-shadow: 0 1px 4px var(--main-color-33);
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+
+      button:hover {
+        background: #ff7fa2;
+        color: #fff;
+        box-shadow: 0 2px 8px var(--main-color-44);
+      }
+
+      .warning-error {
+        margin-bottom: 18px;
+        padding: 12px 18px;
+        background: #ffe0e0;
+        border-radius: 7px;
+        border: 1.5px solid var(--main-color);
+        color: #c00;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 1px 4px var(--main-color-22);
+      }
+
+      .warning-notice {
+        margin-top: 18px;
+        padding: 14px 18px;
+        background: #fffbe0;
+        border-radius: 8px;
+        border: 1.5px solid #ffe066;
+        color: #b8860b;
+        font-size: 1.08em;
+        text-align: center;
+        box-shadow: 0 1px 4px #ffe06633;
+      }
+
+      .post {
+        background: #f8f9ff;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px var(--main-color-11);
+        border: 2px solid #e0e7ff;
+        margin-bottom: 28px;
+        padding: 22px 20px 16px 20px;
+        transition: box-shadow 0.2s, border-color 0.2s;
+      }
+
+      .post:hover {
+        box-shadow: 0 4px 16px var(--main-color-22);
+        border-color: var(--main-color);
+      }
+
+      .post:last-child {
+        margin-bottom: 0;
+      }
+
+      .comments {
+        margin-top: 14px;
+        padding-left: 18px;
+        color: #444;
+        background: #ffe0f4;
+        border-radius: 6px;
+        padding: 10px 14px 8px 14px;
+        box-shadow: 0 1px 4px var(--main-color-11);
+      }
+
+      .comment {
+        margin-bottom: 6px;
+        font-size: 0.98em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1><%= admin_username %> Blog</h1>
+      <% if (error) { %>
+      <div class="warning-error"><%= error %></div>
+      <% } %> <% if (!username) { %>
+      <form class="login-form" method="POST" action="/login">
+        <input type="text" name="username" placeholder="Username" required />
+        <button type="submit">Login</button>
+      </form>
+      <% } else { %>
+      <form class="logout-form" method="POST" action="/logout">
+        <span>Logged in as <b><%= username %></b></span>
+        <button type="submit">Logout</button>
+      </form>
+      <% } %> <% posts.forEach(post => { %>
+      <div class="post">
+        <h2><%= post.title %></h2>
+        <p><%= post.content %></p>
+        <% if (username) { %>
+        <div style="margin-top:12px; text-align:right;">
+          <button type="button" aria-label="Like post <%= post.id %>" onclick="alert('Thank you! <3')">👍 Like</button>
+        </div>
+        <% } %>
+        <% if (post.comments) { %>
+        <div class="comments">
+          <h3>Comments</h3>
+          <% post.comments.forEach(comment => { %>
+          <div class="comment"><b><%= comment.user %>:</b> <%= comment.text %></div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+      <% }) %>
+      <div class="warning-notice"><b>Notice:</b> Only the admin can see comments under posts.</div>
+    </div>
+  </body>
+</html>

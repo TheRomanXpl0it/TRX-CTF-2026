@@ -1,0 +1,12 @@
+{
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ."
+  },
+  "dependencies": {
+    "ejs": "^4.0.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2"
+  }
+}

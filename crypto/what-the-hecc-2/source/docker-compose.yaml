@@ -1,0 +1,8 @@
+services:
+  hecc-two:
+    image: what-the-hecc-two
+    ports:
+      - '9102:1337'
+    restart: unless-stopped
+    environment:
+      - FLAG=TRX{1_th1nk_we_c4n_d0_wa44a44aaaaa44y_b3tt3r_uwu}

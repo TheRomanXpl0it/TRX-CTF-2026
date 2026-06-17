@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Short Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #1a1a1a;
+      --border: #333;
+      --text: #eaeaea;
+      --subtle: #999;
+      --accent: #00dfa2;
+      --error: #ff3860;
+      --radius: 12px;
+    }
+
+    body[data-theme="light"] {
+      --bg: #fafafa;
+      --panel: #fff;
+      --border: #e5e5e5;
+      --text: #111;
+      --subtle: #555;
+      --accent: #008c6b;
+      --error: #d21b3d;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    header span {
+      font-size: 0.875rem;
+      color: var(--subtle);
+    }
+
+    #theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-left: 1rem;
+    }
+
+    #theme-toggle:hover,
+    #theme-toggle:focus-visible {
+      background: var(--border);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 0.75rem;
+        max-height: 150px;
+      }
+
+      .sidebar h2 {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .note-item {
+        padding: 0.375rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+      }
+
+      .content {
+        padding: 1rem;
+      }
+
+      header {
+        padding: 0.75rem 1rem;
+      }
+
+      header h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+      overflow-y: auto;
+      background: var(--panel);
+    }
+
+    .sidebar h2 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: var(--subtle);
+    }
+
+    .note-item {
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .note-item:not(:last-child) {
+      margin-bottom: 0.5rem;
+    }
+
+    .note-item:hover {
+      background: var(--border);
+      transform: scale(1.02);
+    }
+
+    .note-item.active {
+      border-color: var(--accent);
+    }
+
+    .note-title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .note-preview {
+      display: none;
+    }
+
+    .content {
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .content h2 {
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 600px;
+    }
+
+    input[type="text"],
+    textarea {
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    button {
+      align-self: start;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, transform 0.15s;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--accent);
+      color: var(--bg);
+      transform: scale(1.02);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+    }
+
+    .error {
+      color: var(--error);
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .placeholder {
+      color: var(--subtle);
+    }
+
+    pre {
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;">
+      <button id="theme-toggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+      <h1>Short Notes</h1>
+    </div>
+    <span id="note-count" aria-live="polite"></span>
+  </header>
+  <main>
+    <aside class="sidebar" role="listbox" aria-label="Notes list">
+      <h2>Your notes</h2>
+      <div id="notes-list"><div class="placeholder">No notes yet</div></div>
+    </aside>
+    <section class="content">
+      <h2 id="form-heading">Create new note</h2>
+      <form id="note-form">
+        <input type="text" id="title-input" placeholder="Title (max 8 chars)" maxlength="8" required aria-label="Note title" />
+        <textarea id="content-input" placeholder="Write something..." required aria-label="Note content"></textarea>
+        <div style="display:flex;gap:.5rem;">
+          <button type="submit" id="save-btn">Save</button>
+        </div>
+        <div id="form-error" class="error" style="display:none;"></div>
+      </form>
+      <div id="view-container" style="display:none;margin-top:2rem;">
+        <h2 id="view-title"></h2>
+        <div id="view-content" style="white-space:pre-wrap;margin-top:.5rem;"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const notyf = new Notyf({
+      duration: 2500,
+      position: { x: 'right', y: 'bottom' }
+    });
+
+    // theme
+    const bodyEl = document.body;
+    const themeToggle = document.getElementById('theme-toggle');
+
+    const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
+    const storedTheme = localStorage.getItem('theme');
+
+    if (storedTheme === 'light' || (!storedTheme && prefersLight)) {
+      bodyEl.dataset.theme = 'light';
+      themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isLight = bodyEl.dataset.theme === 'light';
+      bodyEl.dataset.theme = isLight ? '' : 'light';
+      localStorage.setItem('theme', isLight ? 'dark' : 'light');
+      themeToggle.innerHTML = isLight
+        ? '<i class="fas fa-moon"></i>'
+        : '<i class="fas fa-sun"></i>';
+    });
+
+    // elements
+    const el = {
+      notesList: document.getElementById('notes-list'),
+      noteCount: document.getElementById('note-count'),
+      form: document.getElementById('note-form'),
+      titleInput: document.getElementById('title-input'),
+      contentInput: document.getElementById('content-input'),
+      saveBtn: document.getElementById('save-btn'),
+      formError: document.getElementById('form-error'),
+      viewBox: document.getElementById('view-container'),
+      viewTitle: document.getElementById('view-title'),
+      viewContent: document.getElementById('view-content'),
+      formHeading: document.getElementById('form-heading')
+    };
+
+    let currentActive = null;
+
+    // api
+    const api = {
+      list: () => fetch('/notes').then((r) => r.json()),
+      count: () => fetch('/notes?length=true').then((r) => r.json()),
+      get: (t) => fetch(`/note/${encodeURIComponent(t)}`).then((r) => r.json()),
+      create: (d) =>
+        fetch('/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(d)
+        }).then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+    };
+
+    // render list
+    function renderNotesList(notes) {
+      el.notesList.innerHTML = '';
+      if (!notes.length) return;
+
+      notes.forEach((n) => {
+        const item = document.createElement('div');
+        item.className = 'note-item';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'note-title';
+        titleSpan.textContent = n.title;
+
+        item.appendChild(titleSpan);
+        item.addEventListener('click', () => openNote(item, n.title));
+        el.notesList.appendChild(item);
+      });
+    }
+
+    async function refresh() {
+      el.noteCount.textContent = 'Loading...';
+      const c = await api.count();
+      el.noteCount.textContent = `${c.length} ${c.length === 1 ? 'note' : 'notes'}`;
+      const list = await api.list();
+      renderNotesList(list);
+    }
+
+    async function openNote(div, title) {
+      if (currentActive) currentActive.classList.remove('active');
+      div.classList.add('active');
+      currentActive = div;
+
+      el.viewBox.style.display = 'block';
+      el.viewTitle.textContent = 'Loading...';
+      el.viewContent.textContent = '';
+
+      const note = await api.get(title);
+      el.viewTitle.textContent = note.title;
+      el.viewContent.textContent = note.content || '';
+    }
+
+    // create
+    el.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      el.formError.style.display = 'none';
+
+      const title = el.titleInput.value.trim();
+      const content = el.contentInput.value.trim();
+
+      if (!title || !content) return;
+
+      const res = await api.create({ title, content });
+
+      if (!res.ok) {
+        el.formError.textContent = res.data.error || 'Unknown error';
+        el.formError.style.display = 'block';
+        return;
+      }
+
+      notyf.success('Note saved');
+      el.formHeading.textContent = 'Create new note';
+      el.titleInput.value = '';
+      el.contentInput.value = '';
+      await refresh();
+    });
+
+    // drafts
+    ['input', 'change'].forEach((evt) => {
+      el.contentInput.addEventListener(evt, () =>
+        localStorage.setItem('draft_content', el.contentInput.value)
+      );
+      el.titleInput.addEventListener(evt, () =>
+        localStorage.setItem('draft_title', el.titleInput.value)
+      );
+    });
+
+    el.titleInput.value = localStorage.getItem('draft_title') || '';
+    el.contentInput.value = localStorage.getItem('draft_content') || '';
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        el.saveBtn.click();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

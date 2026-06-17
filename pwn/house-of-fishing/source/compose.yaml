@@ -1,0 +1,11 @@
+services:
+  hof:
+    image: pwn_hof
+    restart: unless-stopped
+    init: true
+    privileged: true
+    ports:
+      - '9098:1337'
+    environment:
+      - 'FLAG=TRX{1_h0p3_y0u_d1dn7_637_f15h3d_by_7h3_w473r}'
+      - 'TIMEOUT=60'

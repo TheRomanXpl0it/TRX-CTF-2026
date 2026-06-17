@@ -1,0 +1,16 @@
+services:
+  win-chall:
+    image: pwn_ret2win
+    restart: unless-stopped
+    init: true
+    privileged: true
+    volumes:
+      - ./chall.exe:/home/user/chall.exe:ro
+    ports:
+      - '9092:1337'
+    environment:
+      - 'FLAG=TRX{w1n3_15_d1ff3r3n7_fr0m_w1nd0w5_15n7_17}'
+      - 'TIMEOUT=60'
+      - 'TEMPDIRS=/tmp'
+      - 'RLIMIT_FSIZE=64'
+      - 'RLIMIT_NOFILE=1024'

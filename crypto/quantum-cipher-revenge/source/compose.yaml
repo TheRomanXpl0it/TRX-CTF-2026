@@ -1,0 +1,6 @@
+services:
+  quantumcipherrevenge:
+    image: crypto_quantumcipherrevenge
+    ports:
+      - '9100:1234'
+    restart: unless-stopped

@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    ports:
+      - 1337:1337
+    environment:
+      - FLAG=TRX{n0t_s0_s4f3_m0d3_dwiudwahyudyusaidwqjn}

@@ -1,0 +1,8 @@
+# Organized build outputs
+build/
+
+# Legacy output names from older build script
+challenge.exe
+payload.dll
+encrypted_payload.bin
+payload.res

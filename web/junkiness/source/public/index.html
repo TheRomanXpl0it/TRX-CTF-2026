@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Junkiness</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        max-width: 400px;
+        background: #fff;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        text-align: center;
+      }
+      form {
+        margin-bottom: 20px;
+      }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      #flagBtn {
+        background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+        color: #fff;
+        font-size: 1.1em;
+        font-weight: bold;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        border-radius: 24px;
+        margin-bottom: 16px;
+      }
+      #flagBtn:hover {
+        filter: brightness(1.1) drop-shadow(0 0 6px #fff);
+      }
+      .message {
+        text-align: center;
+        margin-top: 10px;
+        color: #d9534f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button id="flagBtn">CLICK FOR FREE FLAGS!!!</button>
+      <h2>Register</h2>
+      <form id="registerForm">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Register</button>
+      </form>
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <button id="logoutBtn" style="display: none">Logout</button>
+      <div class="message" id="message"></div>
+    </div>
+    <script>
+      const registerForm = document.getElementById("registerForm");
+      const loginForm = document.getElementById("loginForm");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const flagBtn = document.getElementById("flagBtn");
+      const messageDiv = document.getElementById("message");
+
+      registerForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const formData = new FormData(registerForm);
+        const data = new URLSearchParams(formData);
+        try {
+          const res = await fetch("/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data,
+          });
+          const result = await res.json();
+          messageDiv.textContent = result.message || "Unknown error.";
+          messageDiv.style.color = res.ok ? "green" : "#d9534f";
+        } catch (err) {
+          messageDiv.textContent = "Network error: " + err.message;
+          messageDiv.style.color = "#d9534f";
+        }
+      });
+
+      loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const formData = new FormData(loginForm);
+        const data = new URLSearchParams(formData);
+        try {
+          const res = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data,
+          });
+          const result = await res.json();
+          messageDiv.textContent = result.message || "Unknown error.";
+          messageDiv.style.color = res.ok ? "green" : "#d9534f";
+          if (res.ok) {
+            logoutBtn.style.display = "block";
+          }
+        } catch (err) {
+          messageDiv.textContent = "Network error: " + err.message;
+          messageDiv.style.color = "#d9534f";
+        }
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          const res = await fetch("/logout", {
+            method: "POST",
+          });
+          const result = await res.json();
+          messageDiv.textContent = result.message || "Unknown error.";
+          messageDiv.style.color = "green";
+          logoutBtn.style.display = "none";
+        } catch (err) {
+          messageDiv.textContent = "Network error: " + err.message;
+          messageDiv.style.color = "#d9534f";
+        }
+      });
+
+      flagBtn.addEventListener("click", async () => {
+        try {
+          const res = await fetch("/flag");
+          let result;
+          try {
+            result = await res.json();
+          } catch {
+            messageDiv.textContent = "Error fetching flag.";
+            messageDiv.style.color = "#d9534f";
+            return;
+          }
+          if (res.ok && (result.flag || typeof result === "string")) {
+            messageDiv.textContent = "Flag: " + (result.flag || result);
+            messageDiv.style.color = "green";
+          } else if (result.message) {
+            messageDiv.textContent = result.message;
+            messageDiv.style.color = "#d9534f";
+          } else {
+            messageDiv.textContent = "Error fetching flag.";
+            messageDiv.style.color = "#d9534f";
+          }
+        } catch (err) {
+          messageDiv.textContent = "Network error: " + err.message;
+          messageDiv.style.color = "#d9534f";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,3 @@
+#include "payload.h"
+
+IDR_ENCRYPTED_PAYLOAD RCDATA "../build/encrypted_payload.bin"

@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+        FLAG: "TRX{s0_n0w_I_inst4ll_ff_ext3nsi0ns_and_I_g3t_rce-ed_wtf!?}"
+    init: true
+    restart: no

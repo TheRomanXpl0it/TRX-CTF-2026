@@ -1,0 +1,37 @@
+services:
+  trx-gambling-house:
+    image: misc_trx-gambling-house
+    environment:
+      - FLAG=${FLAG:-TRX{https://github.com/MystenLabs/sui/blob/main/crates/sui-protocol-config/src/lib.rs#L1233}}
+    expose:
+      - "9000"
+      - "1337"
+
+    networks:
+      - default
+      - trxd-shared-internal
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=trxd-shared-internal"
+
+      - "traefik.http.routers.rpc-${CONTAINER_NAME}.rule=Host(`rpc-${INSTANCE_DOMAIN}`)"
+      - "traefik.http.routers.rpc-${CONTAINER_NAME}.entrypoints=web"
+      - "traefik.http.routers.rpc-${CONTAINER_NAME}.priority=20"
+      - "traefik.http.services.rpc-${CONTAINER_NAME}.loadbalancer.server.port=9000"
+
+      - "traefik.tcp.routers.launcher-${CONTAINER_NAME}.rule=HostSNI(`launcher-${INSTANCE_DOMAIN}`)"
+      - "traefik.tcp.routers.launcher-${CONTAINER_NAME}.entrypoints=tcp"
+      - "traefik.tcp.routers.launcher-${CONTAINER_NAME}.tls=true"
+      - "traefik.tcp.routers.launcher-${CONTAINER_NAME}.priority=20"
+      - "traefik.tcp.services.launcher-${CONTAINER_NAME}.loadbalancer.server.port=1337"
+
+networks:
+  trxd-shared-internal:
+    external: true

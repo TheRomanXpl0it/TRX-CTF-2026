@@ -1,0 +1,6 @@
+
+services:
+  misc:
+    build: .
+    ports:
+      - 7000:5000

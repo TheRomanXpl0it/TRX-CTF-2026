@@ -1,0 +1,9 @@
+services:
+  ote:
+    build: .
+    image: ote
+    ports:
+      - "12345:1337"
+    environment:
+      - FLAG=${FLAG:-TRX{fake_flag}}
+

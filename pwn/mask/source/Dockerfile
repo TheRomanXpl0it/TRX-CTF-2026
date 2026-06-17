@@ -1,0 +1,3 @@
+FROM cybersecnatlab/challenge-jail@sha256:bdb4f33f2c4604c8818b86fc7d52ce50c047a9556b43a8005c3d61ca1622dd43
+
+COPY mask /home/user/chall

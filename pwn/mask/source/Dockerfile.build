@@ -1,0 +1,7 @@
+FROM ubuntu@sha256:69ce9399fe60c5710baee8416b7991183653c3d577afc2b0e3bfe508d7c76142
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential
+
+WORKDIR /build

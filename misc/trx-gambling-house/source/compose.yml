@@ -1,0 +1,11 @@
+services:
+  trx-gambling-house:
+    build:
+      context: .
+      args:
+        SUI_VERSION: testnet-1.70.1
+    environment:
+      - FLAG=${FLAG:-TRX{fake_flag}}
+    ports:
+      - "9000:9000"
+      - "1337:1337"

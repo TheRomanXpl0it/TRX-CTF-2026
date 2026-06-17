@@ -1,0 +1,6 @@
+services:
+  hbkg:
+    image: crypto_hbkg
+    ports:
+      - '9094:1337'
+    restart: unless-stopped

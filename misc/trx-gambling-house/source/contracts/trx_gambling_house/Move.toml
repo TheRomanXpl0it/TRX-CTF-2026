@@ -1,0 +1,7 @@
+[package]
+name = "trx_gambling_house"
+edition = "2024"
+# license
+# authors
+
+[dependencies]

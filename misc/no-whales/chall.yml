@@ -1,0 +1,14 @@
+name: No Whales? 🤨
+category: misc
+description: |
+  I wrote my first dockerfile today, but I messed up something can you help me sort it out?
+authors:
+  - ice cream
+type: Normal
+max_points: 500
+score_type: Dynamic
+flags:
+  - flag: TRX{t0_Mak3_lLm5_go_cr4zY_0n_th1s_Chall3nGe_i_hAd_To_g3neRat3_tHi5_fLag_l1k3_4_p0Em_onLy_tO_m4kE_it_vErY_VeRy_l0ng_so_ThaT_maYb3_th3y_would_Not_b3_aBLe_TO_r3c0v3r_1t_oN3_sh0t_AnD_nOt_BrUtE_forc3_1t!!}
+    regex: false
+attachments:
+  - ./attachments/no-whales.zip

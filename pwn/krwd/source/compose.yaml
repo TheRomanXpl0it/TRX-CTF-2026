@@ -1,0 +1,7 @@
+services:
+  krwd:
+    build:
+        context: .
+    ports:
+      - '1337:1337'
+    restart: unless-stopped

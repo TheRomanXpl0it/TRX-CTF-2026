@@ -1,0 +1,14 @@
+name: 1+1
+category: rev
+description: |
+  In a world ruined by llms, can you just make some additions by yourself?
+authors:
+  - ice cream
+type: Normal
+max_points: 500
+score_type: Dynamic
+flags:
+  - flag: TRX{you_really_did_it_you_can_do_additions_you_won_this_cookie_-->_http://youtube.com/post/UgkxZyfYqbQJRn86UCsEh8AZBnE8GVO-4fXI}
+    regex: false
+attachments:
+  - ./attachments/1+1.zip

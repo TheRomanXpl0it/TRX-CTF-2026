@@ -1,0 +1,11 @@
+services:
+  mask:
+    image: pwn_mask
+    restart: unless-stopped
+    init: true
+    privileged: true
+    ports:
+      - '9093:1337'
+    environment:
+      - 'FLAG=TRX{4uxv_15_7h3_c4n4ry_c4g3}'
+      - 'TIMEOUT=60'

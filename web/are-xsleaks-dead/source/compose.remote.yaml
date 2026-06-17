@@ -1,0 +1,52 @@
+services:
+  web:
+    image: web_app-arexsleaksdead
+    expose:
+      - "8000"
+    networks:
+      - default
+      - trxd-shared-internal
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: trxd-shared-internal
+
+      traefik.http.routers.app-${CONTAINER_NAME}.rule: Host(`app-${INSTANCE_DOMAIN}`)
+      traefik.http.routers.app-${CONTAINER_NAME}.entrypoints: web
+      traefik.http.routers.app-${CONTAINER_NAME}.priority: "20"
+      traefik.http.services.app-${CONTAINER_NAME}.loadbalancer.server.port: "8000"
+
+  bot:
+    image: web_bot-arexsleaksdead
+    depends_on:
+      - web
+    environment:
+      BASE_URL: http://web:8000/
+      FLAG: ${FLAG:-TRX{s0p_1s_4_s0cial_c0n5truct_f7bd}}
+    expose:
+      - "9000"
+    networks:
+      - default
+      - trxd-shared-internal
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: trxd-shared-internal
+
+      traefik.http.routers.-${CONTAINER_NAME}.rule: Host(`bot-${INSTANCE_DOMAIN}`)
+      traefik.http.routers.bot-${CONTAINER_NAME}.entrypoints: web
+      traefik.http.routers.bot-${CONTAINER_NAME}.priority: "20"
+      traefik.http.services.bot-${CONTAINER_NAME}.loadbalancer.server.port: "9000"
+
+networks:
+  trxd-shared-internal:
+    external: true
+

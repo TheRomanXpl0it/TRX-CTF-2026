@@ -1,0 +1,25 @@
+services:
+  bot:
+    image: web_geckodrce
+    init: true
+    restart: no
+    networks:
+      - default
+      - trxd-shared-internal
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: trxd-shared-internal
+
+      traefik.http.routers.${CONTAINER_NAME}.rule: Host(`${INSTANCE_DOMAIN}`)
+      traefik.http.routers.${CONTAINER_NAME}.entrypoints: web
+      traefik.http.routers.${CONTAINER_NAME}.priority: "20"
+      traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port: "3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1.5G
+
+networks:
+  trxd-shared-internal:
+    external: true

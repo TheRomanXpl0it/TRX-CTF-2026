@@ -1,0 +1,6 @@
+services:
+  wandering:
+    build: .
+    ports:
+      - "9091:1337"
+    restart: unless-stopped

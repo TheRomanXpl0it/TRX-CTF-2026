@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Report</title>
+  </head>
+  <body>
+    <form id="report-form">
+      <input id="url" name="url" type="url" placeholder="https://example.com" required>
+      <button type="submit">Report</button>
+    </form>
+    <script>
+      document.getElementById("report-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const url = document.getElementById("url").value;
+        const response = await fetch("/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+        if (response.ok) {
+          document.getElementById("url").value = "";
+          return;
+        }
+        alert("request failed");
+      });
+    </script>
+  </body>
+</html>

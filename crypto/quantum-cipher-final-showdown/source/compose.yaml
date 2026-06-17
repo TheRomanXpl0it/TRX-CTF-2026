@@ -1,0 +1,6 @@
+services:
+  quantumcipherfinalshowdown:
+    image: crypto_quantumcipherfinalshowdown
+    ports:
+      - '9101:1234'
+    restart: unless-stopped

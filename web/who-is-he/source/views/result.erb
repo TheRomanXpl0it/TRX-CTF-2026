@@ -1,0 +1,22 @@
+<section class="result-section">
+    <div class="container">
+        <a href="/" class="back-link">← Back to Search</a>
+        <% if @error %>
+            <div class="alert alert-error">
+                <h3>Error: </h3>
+                <p><%= @error %></p>
+            </div>
+        <% else %>
+            <div class="result-header">
+                <h2>Whois Record for <span><%= @domain %></span></h2>
+            </div>
+            
+            <div class="result-card">
+                <h3>Raw WHOIS Data</h3>
+                <div class="code-container">
+                    <pre><code><%= @result %></code></pre>
+                </div>
+            </div>
+        <% end %>
+    </div>
+</section>

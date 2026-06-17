@@ -1,0 +1,7 @@
+services:
+  gogolf:
+    build: .
+    container_name: gogolf
+    ports:
+      - "31337:1337"
+    restart: unless-stopped

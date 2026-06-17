@@ -1,0 +1,17 @@
+name: nemui
+category: misc
+description: |
+  Titeaux asked to stop at a rest area while we were on the autoroute, but he managed to get lost! He sent us these photos and asked for us to go pick him up.
+
+  Flag format: TRX{XX.XXX_Y.YYY} (latitude and longitude truncated to 3 decimal places, separated by an underscore, e.g. TRX{1.234_5.678})
+authors:
+  - Titto
+type: Normal
+max_points: 500
+score_type: Dynamic
+flags:
+  - flag: TRX{45.246_6.424}
+    regex: false
+attachments:
+  - ./attachments/osint_titto1.jpg
+  - ./attachments/osint_titto2.jpg

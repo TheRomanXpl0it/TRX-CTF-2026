@@ -1,0 +1,6 @@
+services:
+  quantumcipher:
+    image: crypto_quantumcipher
+    ports:
+      - '9099:1234'
+    restart: unless-stopped

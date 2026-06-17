@@ -1,0 +1,7 @@
+services:
+  rsss:
+    image: crypto_rsss
+    ports:
+      - "9097:1337"
+    environment:
+      - FLAG=TRX{b4d_1d34_w0r53_3x3cut10n}
